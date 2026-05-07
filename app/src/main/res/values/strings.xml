@@ -1,3 +1,9 @@
 <resources>
-    <string name="app_name">NextStation</string>
+    <string name="app_name">안심 하차 (Safe Arrival)</string>
+    <string name="destination_label">목적지</string>
+    <string name="minutes_label">도착 예정 시간 (분)</string>
+    <string name="phone_label">알림 문자 보낼 번호</string>
+    <string name="message_label">문자 내용</string>
+    <string name="reserve_button">알림 예약하기</string>
+    <string name="recent_history">최근 기록</string>
 </resources>
