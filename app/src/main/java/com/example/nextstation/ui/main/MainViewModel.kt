@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nextstation.domain.model.ArrivalInfo
 import com.example.nextstation.domain.model.RealTimeArrival
+import com.example.nextstation.domain.model.StationInfo
 import com.example.nextstation.domain.repository.ArrivalRepository
 import com.example.nextstation.service.ArrivalService
 import com.example.nextstation.util.AlarmReceiver
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -35,14 +37,50 @@ class MainViewModel @Inject constructor(
     private val _realTimeResults = MutableStateFlow<List<RealTimeArrival>>(emptyList())
     val realTimeResults = _realTimeResults.asStateFlow()
 
+    private val _routeResults = MutableStateFlow<List<com.example.nextstation.domain.model.RouteInfo>>(emptyList())
+    val routeResults = _routeResults.asStateFlow()
+
+    private val _stationSearchResults = MutableStateFlow<List<StationInfo>>(emptyList())
+    val stationSearchResults = _stationSearchResults.asStateFlow()
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
+
+    fun searchRoutes(destination: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _routeResults.value = repository.searchRoutesToDestination(destination)
+            _isLoading.value = false
+        }
+    }
+
+    fun searchStations(name: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _stationSearchResults.value = repository.searchStations(name)
+            _isLoading.value = false
+        }
+    }
 
     fun searchBusArrival(arsId: String) {
         viewModelScope.launch {
             _isLoading.value = true
-            _realTimeResults.value = repository.getRealTimeArrival(arsId)
+            val results = withContext(Dispatchers.IO) {
+                repository.getRealTimeArrival(arsId)
+            }
+            _realTimeResults.value = results
             _isLoading.value = false
+        }
+    }
+
+    fun clearSearchResults() {
+        _stationSearchResults.value = emptyList()
+        _realTimeResults.value = emptyList()
+    }
+
+    fun deleteArrivalInfo(info: ArrivalInfo) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.deleteArrivalInfo(info)
         }
     }
 
@@ -59,7 +97,6 @@ class MainViewModel @Inject constructor(
             repository.insertArrivalInfo(info)
         }
 
-        // 1. Start Foreground Service
         val serviceIntent = Intent(context, ArrivalService::class.java).apply {
             action = ArrivalService.ACTION_START
             putExtra("destination", destination)
@@ -71,7 +108,6 @@ class MainViewModel @Inject constructor(
             context.startService(serviceIntent)
         }
 
-        // 2. Schedule Alarm
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra("destination", destination)
