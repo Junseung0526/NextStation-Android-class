@@ -71,6 +71,12 @@ dependencies {
     ksp(libs.room.compiler)
 
     implementation(libs.androidx.work.runtime.ktx)
+
+    // Network
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.gson)
+    implementation(libs.okhttp.logging)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

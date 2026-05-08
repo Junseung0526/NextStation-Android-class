@@ -9,13 +9,16 @@ import android.provider.Settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nextstation.domain.model.ArrivalInfo
+import com.example.nextstation.domain.model.RealTimeArrival
 import com.example.nextstation.domain.repository.ArrivalRepository
 import com.example.nextstation.service.ArrivalService
 import com.example.nextstation.util.AlarmReceiver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -28,6 +31,20 @@ class MainViewModel @Inject constructor(
 
     val history = repository.getArrivalHistory()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val _realTimeResults = MutableStateFlow<List<RealTimeArrival>>(emptyList())
+    val realTimeResults = _realTimeResults.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
+
+    fun searchBusArrival(arsId: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _realTimeResults.value = repository.getRealTimeArrival(arsId)
+            _isLoading.value = false
+        }
+    }
 
     fun setAlarm(destination: String, minutes: Int, phoneNumber: String, message: String) {
         val arrivalTime = System.currentTimeMillis() + (minutes * 60 * 1000L)
