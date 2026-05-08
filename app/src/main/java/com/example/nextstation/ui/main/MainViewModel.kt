@@ -14,6 +14,7 @@ import com.example.nextstation.service.ArrivalService
 import com.example.nextstation.util.AlarmReceiver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -37,12 +38,13 @@ class MainViewModel @Inject constructor(
             message = message
         )
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.insertArrivalInfo(info)
         }
 
         // 1. Start Foreground Service
         val serviceIntent = Intent(context, ArrivalService::class.java).apply {
+            action = ArrivalService.ACTION_START
             putExtra("destination", destination)
             putExtra("arrivalTime", arrivalTime)
         }
@@ -74,7 +76,6 @@ class MainViewModel @Inject constructor(
                     pendingIntent
                 )
             } else {
-                // Request permission or use non-exact alarm
                 val settingsIntent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
                 settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(settingsIntent)
