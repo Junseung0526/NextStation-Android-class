@@ -48,7 +48,7 @@ object AppModule {
             .build()
 
         return Retrofit.Builder()
-            .baseUrl("http://ws.bus.go.kr/api/rest/stationinfo/") // Placeholder base URL
+            .baseUrl("http://ws.bus.go.kr/api/rest/")
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)
             .build()
