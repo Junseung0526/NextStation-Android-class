@@ -1,39 +1,25 @@
-# 안심 하차 (Safe Arrival) - MVP 모델
+# NextStation
 
-본 프로젝트는 실물 기기 없이 안드로이드 에뮬레이터(AVD)만으로 테스트할 수 있도록 설계된 '대중교통 하차 도우미' 앱입니다.
+서울시 버스 실시간 도착 정보를 기반으로 하는 대중교통 하차 도우미 애플리케이션입니다.
 
-## 🚀 주요 기능
-- **시간 기반 타이머**: GPS 대신 사용자가 입력한 예상 도착 시간을 기반으로 작동합니다.
-- **백그라운드 알림**: `Foreground Service`를 통해 앱이 백그라운드에 있어도 타이머가 유지됩니다.
-- **정밀 알림 (AlarmManager)**: `Doze Mode`에서도 정확한 시간에 알림을 제공하기 위해 `setExactAndAllowWhileIdle()`을 사용합니다.
-- **자동 액션**: 도착 시 진동, TTS 음성 안내, 그리고 지정된 번호로 자동 문자(SMS)를 발송합니다.
-- **이력 저장**: Room DB를 사용하여 최근 목적지를 저장합니다.
+## 주요 기능
+- 실시간 버스 정보 조회: 서울시 버스 API 연동을 통한 정류장별/노선별 실시간 도착 예정 정보 제공.
+- 목적지 기반 경로 검색: 목적지 검색 시 최적의 버스 노선 추천 및 선택 기능.
+- 하차 알림 예약: 선택한 버스의 도착 예정 시간을 계산하여 백그라운드 알림 설정.
+- 자동화 액션: 도착 시점 맞춰 진동 알림, TTS 음성 안내, 지정 번호로 SMS 자동 발송.
+- 이용 기록 관리: 최근 이용한 목적지 및 하차 알림 내역 저장 및 관리.
 
-## 🛠 기술 스택
-- **Language**: Kotlin
-- **UI**: Jetpack Compose (Material 3)
-- **Architecture**: MVVM + Clean Architecture
-- **DI**: Hilt
-- **Local DB**: Room
-- **Background**: Foreground Service + AlarmManager
+## 기술 스택
+- 언어: Kotlin
+- UI 프레임워크: Jetpack Compose
+- 아키텍처: MVVM + Clean Architecture
+- 의존성 주입: Hilt
+- 로컬 데이터베이스: Room
+- 네트워크: Retrofit2, OkHttp3
+- 비동기 처리: Coroutines, Flow
 
-## 📱 에뮬레이터 테스트 가이드
-- **권장 설정**: API Level 34 (Android 14) 이상, Pixel 7 Pro 에뮬레이터.
-- **권한 승인**: 앱 실행 시 요청하는 '알림(Notification)' 및 'SMS 발송' 권한을 승인해야 합니다.
-- **정밀 알람 권한**: Android 12(API 31) 이상에서는 '알람 및 리마인더' 설정에서 '정확한 알람 예약' 권한이 필요할 수 있습니다. (앱에서 설정 화면으로 유도합니다)
-- **로그 확인**: Android Studio의 `Logcat` 탭에서 `AlarmReceiver` 및 `ArrivalService` 태그를 검색하여 작동 여부를 확인할 수 있습니다.
-
-## 🔋 배터리 최적화 (Doze Mode) 해결
-- 안드로이드 시스템은 배터리 절약을 위해 `Doze Mode`를 지원합니다.
-- 본 앱은 이를 우회하여 정시 알림을 보장하기 위해 `AlarmManager.setExactAndAllowWhileIdle()`를 사용합니다.
-- 테스트 시 에뮬레이터에서 강제로 Doze Mode에 진입시켜 테스트하려면 다음 ADB 명령어를 사용할 수 있습니다:
-  ```bash
-  adb shell dumpsys deviceidle force-idle
-  ```
-
-## 📂 디렉토리 구조
-- `data`: local(Room), repository 구현부
-- `domain`: model, repository 인터페이스
-- `service`: `ArrivalService` (Foreground Service)
-- `ui`: Compose UI 및 `MainViewModel`
-- `util`: `AlarmReceiver` (BroadcastReceiver)
+## 개발 및 테스트 환경
+- 최소 SDK: API 26 (Android 8.0)
+- 타겟 SDK: API 35 (Android 15)
+- 테스트 도구: Android Virtual Device (AVD)
+- 특이사항: GPS 하드웨어 없이 시간 기반 로직으로 동작하도록 설계됨.

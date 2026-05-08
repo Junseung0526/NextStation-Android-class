@@ -40,14 +40,21 @@ class ArrivalService : Service(), TextToSpeech.OnInitListener {
                 
                 handleArrival(destination, phoneNumber, message)
             }
+            ACTION_STOP -> {
+                stopSelf()
+            }
         }
 
         return START_STICKY
     }
 
     private fun handleArrival(destination: String, phoneNumber: String?, message: String) {
-        // 1. Update Notification
-        val notification = createNotification(destination, "잠시 후 도착합니다! 하차 준비를 해주세요.")
+        // 1. Update Notification with Stop action
+        val notification = createNotification(
+            destination, 
+            "잠시 후 도착합니다! 하차 준비를 해주세요.",
+            showStopAction = true
+        )
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(NOTIFICATION_ID, notification)
 
@@ -61,9 +68,6 @@ class ArrivalService : Service(), TextToSpeech.OnInitListener {
         if (!phoneNumber.isNullOrBlank()) {
             sendSms(phoneNumber, message)
         }
-        
-        // Stop service after some time or keep it until user dismisses?
-        // For MVP, we can stop it after a delay or let it be.
     }
 
     private fun triggerVibration() {
@@ -117,28 +121,44 @@ class ArrivalService : Service(), TextToSpeech.OnInitListener {
         }
     }
 
-    private fun createNotification(destination: String, contentText: String): Notification {
+    private fun createNotification(
+        destination: String, 
+        contentText: String,
+        showStopAction: Boolean = false
+    ): Notification {
         val intent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("안심 하차")
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("NextStation")
             .setContentText("$destination: $contentText")
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .build()
+
+        if (showStopAction) {
+            val stopIntent = Intent(this, ArrivalService::class.java).apply {
+                action = ACTION_STOP
+            }
+            val stopPendingIntent = PendingIntent.getService(
+                this, 1, stopIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            builder.addAction(android.R.drawable.ic_menu_close_clear_cancel, "알림 끄기", stopPendingIntent)
+        }
+
+        return builder.build()
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Arrival Service Channel",
+                "NextStation 알림",
                 NotificationManager.IMPORTANCE_HIGH
             )
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -157,5 +177,6 @@ class ArrivalService : Service(), TextToSpeech.OnInitListener {
         const val NOTIFICATION_ID = 1
         const val ACTION_START = "com.example.nextstation.ACTION_START"
         const val ACTION_ARRIVED = "com.example.nextstation.ACTION_ARRIVED"
+        const val ACTION_STOP = "com.example.nextstation.ACTION_STOP"
     }
 }
