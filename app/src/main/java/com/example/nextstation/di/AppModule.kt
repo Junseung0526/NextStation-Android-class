@@ -57,10 +57,21 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideTmapApi(): com.example.nextstation.data.remote.TmapApi {
+        return Retrofit.Builder()
+            .baseUrl("https://apis.openapi.sk.com/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(com.example.nextstation.data.remote.TmapApi::class.java)
+    }
+
+    @Provides
+    @Singleton
     fun provideArrivalRepository(
         dao: ArrivalDao,
-        api: BusArrivalApi
+        api: BusArrivalApi,
+        tmapApi: com.example.nextstation.data.remote.TmapApi
     ): ArrivalRepository {
-        return ArrivalRepositoryImpl(dao, api)
+        return ArrivalRepositoryImpl(dao, api, tmapApi)
     }
 }

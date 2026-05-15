@@ -5,43 +5,51 @@ import retrofit2.http.Query
 
 interface BusArrivalApi {
     // Station Info Service
-    @GET("stationinfo/getStationByUid?resultType=json")
+    @GET("stationinfo/getStationByUid")
     suspend fun getBusArrival(
         @Query("serviceKey", encoded = true) serviceKey: String,
-        @Query("arsId") arsId: String
+        @Query("arsId") arsId: String,
+        @Query("resultType") resultType: String = "json"
     ): BusArrivalResponse
 
-    @GET("stationinfo/getStationByName?resultType=json")
+    @GET("stationinfo/getStationByName")
     suspend fun getStationByName(
         @Query("serviceKey", encoded = true) serviceKey: String,
-        @Query("stSrch") stSrch: String
+        @Query("stSrch") stSrch: String,
+        @Query("resultType") resultType: String = "json"
     ): StationSearchResponse
 
     // Arrival Info Service
-    @GET("arrive/getArrInfoByRouteAllList?resultType=json")
-    suspend fun getArrInfoByRouteAllList(
+    @GET("arrive/getArrInfoByRouteAll")
+    suspend fun getArrInfoByRouteAll(
         @Query("serviceKey", encoded = true) serviceKey: String,
-        @Query("busRouteId") busRouteId: String
+        @Query("busRouteId") busRouteId: String,
+        @Query("resultType") resultType: String = "json"
     ): BusArrivalResponse
 
-    @GET("arrive/getArrInfoByRouteList?resultType=json")
-    suspend fun getArrInfoByRouteList(
+    @GET("arrive/getArrInfoByRoute")
+    suspend fun getArrInfoByRoute(
         @Query("serviceKey", encoded = true) serviceKey: String,
         @Query("stId") stId: String,
-        @Query("busRouteId") busRouteId: String
+        @Query("busRouteId") busRouteId: String,
+        @Query("ord") ord: String,
+        @Query("resultType") resultType: String = "json"
     ): BusArrivalResponse
 
-    @GET("arrive/getLowArrInfoByRouteList?resultType=json")
-    suspend fun getLowArrInfoByRouteList(
+    @GET("arrive/getLowArrInfoByStId")
+    suspend fun getLowArrInfoByStId(
         @Query("serviceKey", encoded = true) serviceKey: String,
         @Query("stId") stId: String,
-        @Query("busRouteId") busRouteId: String
+        @Query("resultType") resultType: String = "json"
     ): BusArrivalResponse
 
-    @GET("arrive/getLowArrInfoByStIdList?resultType=json")
-    suspend fun getLowArrInfoByStIdList(
+    @GET("arrive/getLowArrInfoByRoute")
+    suspend fun getLowArrInfoByRoute(
         @Query("serviceKey", encoded = true) serviceKey: String,
-        @Query("stId") stId: String
+        @Query("stId") stId: String,
+        @Query("busRouteId") busRouteId: String,
+        @Query("ord") ord: String,
+        @Query("resultType") resultType: String = "json"
     ): BusArrivalResponse
 }
 

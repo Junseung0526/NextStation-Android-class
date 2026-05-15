@@ -26,6 +26,9 @@ work = "2.9.1"
 # Secrets
 secrets = "2.0.1"
 
+# DataStore
+datastore = "1.1.1"
+
 # Testing
 junit = "4.13.2"
 junitVersion = "1.2.1"
@@ -34,6 +37,9 @@ espressoCore = "3.6.1"
 # Network
 retrofit = "2.11.0"
 okhttp = "4.12.0"
+
+# Maps
+kakaoMaps = "2.13.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -68,6 +74,7 @@ room-compiler = { group = "androidx.room", name = "room-compiler", version.ref =
 
 # WorkManager
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
 # Test
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -78,10 +85,10 @@ androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-co
 retrofit-core = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+kakao-maps = { group = "com.kakao.maps.open", name = "android", version.ref = "kakaoMaps" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-# 이 이름을 build.gradle.kts의 alias에서 사용합니다.
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
