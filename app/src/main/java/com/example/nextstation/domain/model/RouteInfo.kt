@@ -9,7 +9,9 @@ data class RouteInfo(
     val arsId: String,
     val firstArrivalMessage: String = "",
     val firstArrivalTimeSeconds: Int = 0,
-    val firstCongestion: Int = 0
+    val firstCongestion: Int = 0,
+    val gpsX: Double? = null,
+    val gpsY: Double? = null
 )
 
 data class DestinationPath(

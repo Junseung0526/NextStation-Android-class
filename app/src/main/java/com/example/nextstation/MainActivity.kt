@@ -38,6 +38,7 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
         setContent {
             NextStationTheme {
                 Surface(
@@ -60,7 +61,9 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
         mutableListOf(
             Manifest.permission.SEND_SMS,
             Manifest.permission.VIBRATE,
-            Manifest.permission.INTERNET
+            Manifest.permission.INTERNET,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
         ).apply {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 add(Manifest.permission.POST_NOTIFICATIONS)
@@ -126,9 +129,19 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                 startDestination = Screen.Home.route,
                 modifier = Modifier.fillMaxSize()
             ) {
-                composable(Screen.Home.route) { HomeScreen(viewModel) }
+                composable(Screen.Home.route) { 
+                    HomeScreen(
+                        viewModel = viewModel,
+                        onNavigateToSearch = { navController.navigate(Screen.Search.route) }
+                    ) 
+                }
                 composable(Screen.Search.route) { SearchScreen(viewModel) }
-                composable(Screen.History.route) { HistoryScreen(viewModel) }
+                composable(Screen.History.route) { 
+                    HistoryScreen(
+                        viewModel = viewModel,
+                        onNavigateToSearch = { navController.navigate(Screen.Search.route) }
+                    ) 
+                }
                 composable(Screen.Settings.route) { SettingsScreen(viewModel) }
             }
         }

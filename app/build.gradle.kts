@@ -22,6 +22,15 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        ndk {
+            abiFilters.add("armeabi-v7a")
+            abiFilters.add("arm64-v8a")
+        }
+
+        // Explicitly map the secret to a manifest placeholder if the plugin doesn't do it automatically
+        val kakaoKey = project.findProperty("KAKAO_APP_KEY")?.toString() ?: ""
+        manifestPlaceholders["KAKAO_APP_KEY"] = kakaoKey
     }
 
     buildTypes {
@@ -81,11 +90,15 @@ dependencies {
     ksp(libs.room.compiler)
 
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.datastore.preferences)
 
     // Network
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.gson)
     implementation(libs.okhttp.logging)
+
+    // Kakao Maps
+    implementation(libs.kakao.maps)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

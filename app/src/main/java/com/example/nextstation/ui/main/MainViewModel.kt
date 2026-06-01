@@ -12,6 +12,7 @@ import com.example.nextstation.domain.model.ArrivalInfo
 import com.example.nextstation.domain.model.RealTimeArrival
 import com.example.nextstation.domain.model.StationInfo
 import com.example.nextstation.domain.repository.ArrivalRepository
+import com.example.nextstation.data.repository.UserPreferencesRepository
 import com.example.nextstation.service.ArrivalService
 import com.example.nextstation.util.AlarmReceiver
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,11 +29,18 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val repository: ArrivalRepository,
+    private val userPreferencesRepository: UserPreferencesRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     val history = repository.getArrivalHistory()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val defaultPhoneNumber = userPreferencesRepository.defaultPhoneNumber
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery = _searchQuery.asStateFlow()
 
     private val _realTimeResults = MutableStateFlow<List<RealTimeArrival>>(emptyList())
     val realTimeResults = _realTimeResults.asStateFlow()
@@ -84,11 +92,33 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun setAlarm(destination: String, minutes: Int, phoneNumber: String, message: String) {
-        val arrivalTime = System.currentTimeMillis() + (minutes * 60 * 1000L)
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun updateDefaultPhoneNumber(phoneNumber: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.updateDefaultPhoneNumber(phoneNumber)
+        }
+    }
+
+    private val _estimatedTime = MutableStateFlow<Int?>(null)
+    val estimatedTime = _estimatedTime.asStateFlow()
+
+    fun estimateTravelTime(startX: Double, startY: Double, endX: Double, endY: Double) {
+        viewModelScope.launch {
+            _estimatedTime.value = repository.getEstimatedTravelTime(startX, startY, endX, endY)
+        }
+    }
+
+    fun setAlarm(destination: String, leadMinutes: Int, phoneNumber: String, message: String) {
+        val travelSeconds = _estimatedTime.value ?: (30 * 60) // Default 30 mins if estimation fails
+        val arrivalTime = System.currentTimeMillis() + (travelSeconds * 1000L)
+        val alarmTime = arrivalTime - (leadMinutes * 60 * 1000L)
+        
         val info = ArrivalInfo(
             destinationName = destination,
-            arrivalTime = arrivalTime,
+            arrivalTime = arrivalTime, // Actual estimated arrival
             phoneNumber = phoneNumber,
             message = message
         )
@@ -125,7 +155,7 @@ class MainViewModel @Inject constructor(
             if (alarmManager.canScheduleExactAlarms()) {
                 alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
-                    arrivalTime,
+                    alarmTime,
                     pendingIntent
                 )
             } else {
@@ -136,7 +166,7 @@ class MainViewModel @Inject constructor(
         } else {
             alarmManager.setExactAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
-                arrivalTime,
+                alarmTime,
                 pendingIntent
             )
         }

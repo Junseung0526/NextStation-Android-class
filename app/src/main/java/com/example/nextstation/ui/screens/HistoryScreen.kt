@@ -21,7 +21,10 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun HistoryScreen(viewModel: MainViewModel) {
+fun HistoryScreen(
+    viewModel: MainViewModel,
+    onNavigateToSearch: () -> Unit
+) {
     val history by viewModel.history.collectAsStateWithLifecycle()
 
     Column(
@@ -58,7 +61,11 @@ fun HistoryScreen(viewModel: MainViewModel) {
                 ) { info ->
                     HistoryItem(
                         info = info,
-                        onDelete = { viewModel.deleteArrivalInfo(info) }
+                        onDelete = { viewModel.deleteArrivalInfo(info) },
+                        onClick = {
+                            viewModel.updateSearchQuery(info.destinationName)
+                            onNavigateToSearch()
+                        }
                     )
                 }
             }
@@ -67,11 +74,12 @@ fun HistoryScreen(viewModel: MainViewModel) {
 }
 
 @Composable
-fun HistoryItem(info: ArrivalInfo, onDelete: () -> Unit) {
+fun HistoryItem(info: ArrivalInfo, onDelete: () -> Unit, onClick: () -> Unit) {
     val dateFormat = SimpleDateFormat("MM/dd HH:mm", Locale.getDefault())
     val timeString = dateFormat.format(Date(info.arrivalTime))
 
     Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),

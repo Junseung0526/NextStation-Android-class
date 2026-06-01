@@ -18,30 +18,32 @@ interface BusArrivalApi {
     ): StationSearchResponse
 
     // Arrival Info Service
-    @GET("arrive/getArrInfoByRouteAllList?resultType=json")
-    suspend fun getArrInfoByRouteAllList(
+    @GET("arrive/getArrInfoByRouteAll?resultType=json")
+    suspend fun getArrInfoByRouteAll(
         @Query("serviceKey", encoded = true) serviceKey: String,
         @Query("busRouteId") busRouteId: String
     ): BusArrivalResponse
 
-    @GET("arrive/getArrInfoByRouteList?resultType=json")
-    suspend fun getArrInfoByRouteList(
-        @Query("serviceKey", encoded = true) serviceKey: String,
-        @Query("stId") stId: String,
-        @Query("busRouteId") busRouteId: String
-    ): BusArrivalResponse
-
-    @GET("arrive/getLowArrInfoByRouteList?resultType=json")
-    suspend fun getLowArrInfoByRouteList(
+    @GET("arrive/getArrInfoByRoute?resultType=json")
+    suspend fun getArrInfoByRoute(
         @Query("serviceKey", encoded = true) serviceKey: String,
         @Query("stId") stId: String,
-        @Query("busRouteId") busRouteId: String
+        @Query("busRouteId") busRouteId: String,
+        @Query("ord") ord: String
     ): BusArrivalResponse
 
-    @GET("arrive/getLowArrInfoByStIdList?resultType=json")
-    suspend fun getLowArrInfoByStIdList(
+    @GET("arrive/getLowArrInfoByStId?resultType=json")
+    suspend fun getLowArrInfoByStId(
         @Query("serviceKey", encoded = true) serviceKey: String,
         @Query("stId") stId: String
+    ): BusArrivalResponse
+
+    @GET("arrive/getLowArrInfoByRoute?resultType=json")
+    suspend fun getLowArrInfoByRoute(
+        @Query("serviceKey", encoded = true) serviceKey: String,
+        @Query("stId") stId: String,
+        @Query("busRouteId") busRouteId: String,
+        @Query("ord") ord: String
     ): BusArrivalResponse
 }
 
@@ -57,7 +59,9 @@ data class StationSearchBody(
 data class StationSearchItem(
     val stId: String,
     val stNm: String,
-    val arsId: String
+    val arsId: String,
+    val gpsX: String? = null,
+    val gpsY: String? = null
 )
 
 data class BusArrivalResponse(
@@ -87,5 +91,7 @@ data class BusArrivalItem(
     val reride_Num1: String? = "0", // Congestion (0: No data, 3: Easy, 4: Normal, 5: Congested)
     val busType1: String? = "0",    // Bus type (0: Normal, 1: Low, 2: Articulated)
     val isLast1: String? = "0",     // Last bus flag
-    val full1: String? = "0"        // Full bus flag
+    val full1: String? = "0",       // Full bus flag
+    val gpsX: String? = null,
+    val gpsY: String? = null
 )

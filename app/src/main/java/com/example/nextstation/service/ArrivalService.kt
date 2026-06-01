@@ -28,11 +28,17 @@ class ArrivalService : Service(), TextToSpeech.OnInitListener {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action = intent?.action
         val destination = intent?.getStringExtra("destination") ?: "목적지"
+
+        // Android 8.0+ requires calling startForeground() within 5 seconds of startForegroundService()
+        // We call it immediately with a placeholder if action is not START, to be safe.
+        val notification = createNotification(destination, "알림 서비스를 준비 중입니다...")
+        startForeground(NOTIFICATION_ID, notification)
         
         when (action) {
             ACTION_START -> {
-                val notification = createNotification(destination, "도착 알림이 예약되었습니다.")
-                startForeground(NOTIFICATION_ID, notification)
+                val startNotification = createNotification(destination, "도착 알림이 예약되었습니다.")
+                val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                manager.notify(NOTIFICATION_ID, startNotification)
             }
             ACTION_ARRIVED -> {
                 val phoneNumber = intent.getStringExtra("phoneNumber")
