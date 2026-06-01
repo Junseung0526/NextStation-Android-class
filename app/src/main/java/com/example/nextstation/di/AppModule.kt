@@ -6,6 +6,7 @@ import com.example.nextstation.data.local.ArrivalDao
 import com.example.nextstation.data.local.ArrivalDatabase
 import com.example.nextstation.data.remote.BusArrivalApi
 import com.example.nextstation.data.repository.ArrivalRepositoryImpl
+import com.example.nextstation.data.repository.MockArrivalRepositoryImpl
 import com.example.nextstation.domain.repository.ArrivalRepository
 import dagger.Module
 import dagger.Provides
@@ -72,6 +73,16 @@ object AppModule {
         api: BusArrivalApi,
         tmapApi: com.example.nextstation.data.remote.TmapApi
     ): ArrivalRepository {
-        return ArrivalRepositoryImpl(dao, api, tmapApi)
+        val serviceKey = com.example.nextstation.BuildConfig.BUS_SERVICE_KEY
+        val isMockMode = serviceKey.isBlank() || 
+                         serviceKey.contains("YOUR_PUBLIC_DATA_PORTAL_KEY_HERE") ||
+                         serviceKey.contains("발급받은_인증키_입력") ||
+                         serviceKey.length < 10 // Invalid short mockup key
+                         
+        return if (isMockMode) {
+            MockArrivalRepositoryImpl(dao)
+        } else {
+            ArrivalRepositoryImpl(dao, api, tmapApi)
+        }
     }
 }

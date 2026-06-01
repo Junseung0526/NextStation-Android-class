@@ -56,7 +56,9 @@ class ArrivalRepositoryImpl @Inject constructor(
                     isLast = it.isLast1 == "1",
                     isFull = it.full1 == "1",
                     vehicleNumber = it.plainNo1,
-                    travelTimeSeconds = it.traTime1?.toIntOrNull() ?: 0
+                    travelTimeSeconds = it.traTime1?.toIntOrNull() ?: 0,
+                    gpsX = it.gpsX?.toDoubleOrNull(),
+                    gpsY = it.gpsY?.toDoubleOrNull()
                 )
             } ?: emptyList()
         } catch (e: Exception) {
@@ -84,11 +86,13 @@ class ArrivalRepositoryImpl @Inject constructor(
             // 2. For each station, get the arrival info (which contains route details)
             // Limit to top 5 stations to avoid too many API calls at once
             for (station in stations.take(5)) {
-                if (station.arsId == null || station.arsId == "0") continue
+                if (station.arsId.isBlank() || station.arsId == "0") continue
                 
                 try {
                     val arrivalResponse = api.getBusArrival(SERVICE_KEY, station.arsId)
                     arrivalResponse.msgBody.itemList?.forEach { item ->
+                        val gpsXVal = item.gpsX?.toDoubleOrNull() ?: station.gpsX?.toDoubleOrNull()
+                        val gpsYVal = item.gpsY?.toDoubleOrNull() ?: station.gpsY?.toDoubleOrNull()
                         allRoutes.add(
                             com.example.nextstation.domain.model.RouteInfo(
                                 busNumber = item.rtNm,
@@ -99,7 +103,9 @@ class ArrivalRepositoryImpl @Inject constructor(
                                 arsId = item.arsId ?: "",
                                 firstArrivalMessage = item.arrmsg1,
                                 firstArrivalTimeSeconds = item.traTime1?.toIntOrNull() ?: 0,
-                                firstCongestion = item.reride_Num1?.toIntOrNull() ?: 0
+                                firstCongestion = item.reride_Num1?.toIntOrNull() ?: 0,
+                                gpsX = gpsXVal,
+                                gpsY = gpsYVal
                             )
                         )
                     }

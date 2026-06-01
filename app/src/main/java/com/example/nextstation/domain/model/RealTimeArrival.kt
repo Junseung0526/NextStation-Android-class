@@ -9,5 +9,7 @@ data class RealTimeArrival(
     val isLast: Boolean = false,
     val isFull: Boolean = false,
     val vehicleNumber: String? = null,
-    val travelTimeSeconds: Int = 0
+    val travelTimeSeconds: Int = 0,
+    val gpsX: Double? = null,
+    val gpsY: Double? = null
 )

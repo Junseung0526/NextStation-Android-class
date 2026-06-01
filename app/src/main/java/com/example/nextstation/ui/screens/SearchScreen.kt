@@ -31,6 +31,66 @@ import com.kakao.vectormap.MapLifeCycleCallback
 import com.kakao.vectormap.MapView
 
 @Composable
+fun KakaoMapView(
+    modifier: Modifier = Modifier,
+    onMapReady: (KakaoMap) -> Unit = {}
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // 1. Remember the MapView instance across recompositions
+    val mapView = remember { MapView(context) }
+
+    // 2. Manage Lifecycle events strictly
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> { /* No specific start for MapView v2 */ }
+                Lifecycle.Event.ON_RESUME -> mapView.resume()
+                Lifecycle.Event.ON_PAUSE -> mapView.pause()
+                Lifecycle.Event.ON_STOP -> { /* No specific stop for MapView v2 */ }
+                Lifecycle.Event.ON_DESTROY -> {
+                    // MapView cleanup is handled by the SDK usually, 
+                    // but we ensure it stops rendering.
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    // 3. Use AndroidView with a stable factory and update block
+    AndroidView(
+        modifier = modifier,
+        factory = {
+            mapView.apply {
+                // Initialize the map only once in the factory
+                start(object : MapLifeCycleCallback() {
+                    override fun onMapDestroy() {
+                        android.util.Log.d("NextStation_Map", "KakaoMap Destroyed")
+                    }
+
+                    override fun onMapError(error: Exception) {
+                        android.util.Log.e("NextStation_Map", "KakaoMap Error", error)
+                    }
+                }, object : KakaoMapReadyCallback() {
+                    override fun onMapReady(kakaoMap: KakaoMap) {
+                        onMapReady(kakaoMap)
+                        android.util.Log.d("NextStation_Map", "KakaoMap is ready")
+                    }
+                })
+            }
+        },
+        update = {
+            // Logic to update the map when state changes can go here
+        }
+    )
+}
+
+@Composable
 fun SearchScreen(viewModel: MainViewModel) {
     val routeResults by viewModel.routeResults.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
@@ -42,54 +102,20 @@ fun SearchScreen(viewModel: MainViewModel) {
     val phoneNumber by viewModel.defaultPhoneNumber.collectAsStateWithLifecycle()
 
     val colorScheme = MaterialTheme.colorScheme
-    val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     
-    // MapView instance management
-    val mapView = remember { 
-        MapView(context)
-    }
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_RESUME -> mapView.resume()
-                Lifecycle.Event.ON_PAUSE -> mapView.pause()
-                else -> {}
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Full Screen Map Section
-        AndroidView(
-            factory = {
-                mapView.apply {
-                    start(object : MapLifeCycleCallback() {
-                        override fun onMapDestroy() {
-                            android.util.Log.d("NextStation_Map", "KakaoMap Destroyed")
-                        }
-
-                        override fun onMapError(error: Exception) {
-                            android.util.Log.e("NextStation_Map", "KakaoMap Error", error)
-                        }
-                    }, object : KakaoMapReadyCallback() {
-                        override fun onMapReady(kakaoMap: KakaoMap) {
-                            android.util.Log.d("NextStation_Map", "KakaoMap is ready")
-                        }
-                    })
-                }
-            },
-            modifier = Modifier.fillMaxSize()
+        // Optimized KakaoMapView
+        KakaoMapView(
+            modifier = Modifier.fillMaxSize(),
+            onMapReady = { kakaoMap ->
+                // Initial map setup (e.g., camera move)
+            }
         )
         
-        // Floating Top Search Bar
+        // Floating Top Search Bar (rest of the UI remains the same)
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -166,7 +192,22 @@ fun SearchScreen(viewModel: MainViewModel) {
                                     items(routeResults) { route ->
                                         RouteItem(route) {
                                             selectedRoute = route
-                                            viewModel.estimateTravelTime(126.9780, 37.5665, 127.0000, 37.6000)
+                                            
+                                            val locationManager = context.getSystemService(android.content.Context.LOCATION_SERVICE) as android.location.LocationManager
+                                            val (startX, startY) = try {
+                                                val loc = locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                                                    ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+                                                if (loc != null) loc.longitude to loc.latitude else 126.9780 to 37.5665
+                                            } catch (e: SecurityException) {
+                                                126.9780 to 37.5665
+                                            }
+                                            
+                                            viewModel.estimateTravelTime(
+                                                startX = startX,
+                                                startY = startY,
+                                                endX = route.gpsX ?: 127.0000,
+                                                endY = route.gpsY ?: 37.6000
+                                            )
                                         }
                                     }
                                 }

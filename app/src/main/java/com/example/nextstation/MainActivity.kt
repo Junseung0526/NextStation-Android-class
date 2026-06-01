@@ -61,7 +61,9 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
         mutableListOf(
             Manifest.permission.SEND_SMS,
             Manifest.permission.VIBRATE,
-            Manifest.permission.INTERNET
+            Manifest.permission.INTERNET,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
         ).apply {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 add(Manifest.permission.POST_NOTIFICATIONS)
