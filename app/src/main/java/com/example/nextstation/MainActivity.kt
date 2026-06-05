@@ -27,6 +27,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.nextstation.ui.main.MainViewModel
 import com.example.nextstation.ui.navigation.Screen
 import com.example.nextstation.ui.navigation.bottomNavItems
+import com.example.nextstation.ui.screens.AlarmDetailScreen
 import com.example.nextstation.ui.screens.HistoryScreen
 import com.example.nextstation.ui.screens.HomeScreen
 import com.example.nextstation.ui.screens.SearchScreen
@@ -132,17 +133,55 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                 composable(Screen.Home.route) { 
                     HomeScreen(
                         viewModel = viewModel,
-                        onNavigateToSearch = { navController.navigate(Screen.Search.route) }
+                        onNavigateToSearch = {
+                            navController.navigate(Screen.Search.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        onNavigateToAlarmDetail = {
+                            navController.navigate(Screen.AlarmDetail.route)
+                        }
                     ) 
                 }
-                composable(Screen.Search.route) { SearchScreen(viewModel) }
+                composable(Screen.Search.route) { 
+                    SearchScreen(
+                        viewModel = viewModel,
+                        onNavigateToHome = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    ) 
+                }
                 composable(Screen.History.route) { 
                     HistoryScreen(
                         viewModel = viewModel,
-                        onNavigateToSearch = { navController.navigate(Screen.Search.route) }
+                        onNavigateToSearch = {
+                            navController.navigate(Screen.Search.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
                     ) 
                 }
                 composable(Screen.Settings.route) { SettingsScreen(viewModel) }
+                composable(Screen.AlarmDetail.route) {
+                    AlarmDetailScreen(
+                        viewModel = viewModel,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
             }
         }
     }

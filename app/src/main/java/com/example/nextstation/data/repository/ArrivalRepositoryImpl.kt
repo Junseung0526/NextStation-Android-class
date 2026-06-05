@@ -136,4 +136,43 @@ class ArrivalRepositoryImpl @Inject constructor(
             emptyList()
         }
     }
+
+    override suspend fun getRoutePath(startX: Double, startY: Double, endX: Double, endY: Double): List<Pair<Double, Double>> = withContext(Dispatchers.IO) {
+        val pathPoints = mutableListOf<Pair<Double, Double>>()
+        try {
+            val response = tmapApi.getRouteTime(TMAP_KEY, startX, startY, endX, endY)
+            response.features?.forEach { feature ->
+                val geom = feature.geometry
+                if (geom != null) {
+                    val coords = geom.coordinates
+                    if (coords != null) {
+                        if (geom.type == "LineString") {
+                            // coordinates is [[lng, lat], [lng, lat], ...]
+                            val array = coords.asJsonArray
+                            for (i in 0 until array.size()) {
+                                val pointArray = array.get(i).asJsonArray
+                                val lng = pointArray.get(0).asDouble
+                                val lat = pointArray.get(1).asDouble
+                                pathPoints.add(lat to lng)
+                            }
+                        } else if (geom.type == "Point") {
+                            // coordinates is [lng, lat]
+                            val pointArray = coords.asJsonArray
+                            val lng = pointArray.get(0).asDouble
+                            val lat = pointArray.get(1).asDouble
+                            pathPoints.add(lat to lng)
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // Fallback if network or parse fails
+        }
+        
+        if (pathPoints.isEmpty()) {
+            listOf(startY to startX, endY to endX)
+        } else {
+            pathPoints
+        }
+    }
 }

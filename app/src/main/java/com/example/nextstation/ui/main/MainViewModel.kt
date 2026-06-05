@@ -105,16 +105,48 @@ class MainViewModel @Inject constructor(
     private val _estimatedTime = MutableStateFlow<Int?>(null)
     val estimatedTime = _estimatedTime.asStateFlow()
 
+    val isAlarmRunning = ArrivalService.isServiceRunningFlow.asStateFlow()
+    val activeAlarmDestination = ArrivalService.activeDestinationFlow.asStateFlow()
+    val activeAlarmBusNumber = ArrivalService.activeBusNumberFlow.asStateFlow()
+    val activeAlarmRemainingMinutes = ArrivalService.remainingMinutesState.asStateFlow()
+    val activeAlarmGpsX = ArrivalService.activeGpsXFlow.asStateFlow()
+    val activeAlarmGpsY = ArrivalService.activeGpsYFlow.asStateFlow()
+    val activeAlarmLeadMinutes = ArrivalService.activeLeadMinutesFlow.asStateFlow()
+
+    private val _routePath = MutableStateFlow<List<Pair<Double, Double>>>(emptyList())
+    val routePath = _routePath.asStateFlow()
+
+    fun fetchRoutePath(startX: Double, startY: Double, endX: Double, endY: Double) {
+        viewModelScope.launch {
+            _routePath.value = repository.getRoutePath(startX, startY, endX, endY)
+        }
+    }
+
     fun estimateTravelTime(startX: Double, startY: Double, endX: Double, endY: Double) {
         viewModelScope.launch {
             _estimatedTime.value = repository.getEstimatedTravelTime(startX, startY, endX, endY)
         }
     }
 
-    fun setAlarm(destination: String, leadMinutes: Int, phoneNumber: String, message: String) {
+    fun stopAlarm() {
+        val serviceIntent = Intent(context, ArrivalService::class.java).apply {
+            action = ArrivalService.ACTION_STOP
+        }
+        context.startService(serviceIntent)
+    }
+
+    fun setAlarm(
+        destination: String, 
+        leadMinutes: Int, 
+        phoneNumber: String, 
+        message: String,
+        arsId: String,
+        busNumber: String,
+        gpsX: Double?,
+        gpsY: Double?
+    ) {
         val travelSeconds = _estimatedTime.value ?: (30 * 60) // Default 30 mins if estimation fails
         val arrivalTime = System.currentTimeMillis() + (travelSeconds * 1000L)
-        val alarmTime = arrivalTime - (leadMinutes * 60 * 1000L)
         
         val info = ArrivalInfo(
             destinationName = destination,
@@ -130,45 +162,20 @@ class MainViewModel @Inject constructor(
         val serviceIntent = Intent(context, ArrivalService::class.java).apply {
             action = ArrivalService.ACTION_START
             putExtra("destination", destination)
-            putExtra("arrivalTime", arrivalTime)
+            putExtra("arsId", arsId)
+            putExtra("busNumber", busNumber)
+            putExtra("leadMinutes", leadMinutes)
+            putExtra("phoneNumber", phoneNumber)
+            putExtra("message", message)
+            putExtra("gpsX", gpsX ?: 0.0)
+            putExtra("gpsY", gpsY ?: 0.0)
+            putExtra("travelSeconds", travelSeconds)
         }
+        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(serviceIntent)
         } else {
             context.startService(serviceIntent)
-        }
-
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(context, AlarmReceiver::class.java).apply {
-            putExtra("destination", destination)
-            putExtra("phoneNumber", phoneNumber)
-            putExtra("message", message)
-        }
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    alarmTime,
-                    pendingIntent
-                )
-            } else {
-                val settingsIntent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
-                settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                context.startActivity(settingsIntent)
-            }
-        } else {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                alarmTime,
-                pendingIntent
-            )
         }
     }
 }

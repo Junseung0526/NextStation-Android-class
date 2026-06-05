@@ -26,9 +26,14 @@ import com.example.nextstation.ui.main.MainViewModel
 @Composable
 fun HomeScreen(
     viewModel: MainViewModel,
-    onNavigateToSearch: () -> Unit
+    onNavigateToSearch: () -> Unit,
+    onNavigateToAlarmDetail: () -> Unit
 ) {
     val history by viewModel.history.collectAsStateWithLifecycle()
+    val isAlarmRunning by viewModel.isAlarmRunning.collectAsStateWithLifecycle()
+    val activeAlarmDestination by viewModel.activeAlarmDestination.collectAsStateWithLifecycle()
+    val activeAlarmBusNumber by viewModel.activeAlarmBusNumber.collectAsStateWithLifecycle()
+    val activeAlarmRemainingMinutes by viewModel.activeAlarmRemainingMinutes.collectAsStateWithLifecycle()
     val colorScheme = MaterialTheme.colorScheme
     
     Column(
@@ -73,31 +78,46 @@ fun HomeScreen(
         
         Spacer(modifier = Modifier.height(32.dp))
         
-        if (history.isNotEmpty()) {
-            val activeAlarm = history.first() // Latest one
+        if (isAlarmRunning) {
             GlassCard(
+                onClick = onNavigateToAlarmDetail,
                 modifier = Modifier.fillMaxWidth(),
                 containerColor = colorScheme.primaryContainer.copy(alpha = 0.15f)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(16.dp)
+                ) {
                     Box(modifier = Modifier.size(44.dp), contentAlignment = Alignment.Center) {
                         PulseAnimation(modifier = Modifier.fillMaxSize())
                         Icon(Icons.Default.DirectionsBus, null, tint = colorScheme.primary)
                     }
                     Spacer(Modifier.width(16.dp))
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "현재 안내 중",
+                            text = "실시간 도착 알림 진행 중",
                             style = MaterialTheme.typography.labelMedium,
                             color = colorScheme.primary,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = activeAlarm.destinationName,
+                            text = "$activeAlarmDestination (${activeAlarmBusNumber}번 버스)",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
+                        val remainingText = activeAlarmRemainingMinutes?.let { "약 ${it}분 남음" } ?: "도착 정보 계산 중..."
+                        Text(
+                            text = remainingText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colorScheme.onSurfaceVariant
+                        )
                     }
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowForwardIos,
+                        null,
+                        tint = colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))

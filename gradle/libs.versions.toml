@@ -19,7 +19,7 @@ material = "1.12.0"
 constraintlayout = "2.2.0"
 
 # Hilt & Room & Work
-hilt = "2.51.1"
+hilt = "2.55"
 room = "2.6.1"
 work = "2.9.1"
 
