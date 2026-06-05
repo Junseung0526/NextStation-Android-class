@@ -13,4 +13,5 @@ interface ArrivalRepository {
     suspend fun getEstimatedTravelTime(startX: Double, startY: Double, endX: Double, endY: Double): Int?
     suspend fun searchStations(name: String): List<com.example.nextstation.domain.model.StationInfo>
     suspend fun searchRoutesToDestination(destination: String): List<com.example.nextstation.domain.model.RouteInfo>
-    }
+    suspend fun getRoutePath(startX: Double, startY: Double, endX: Double, endY: Double): List<Pair<Double, Double>>
+}

@@ -126,4 +126,16 @@ class MockArrivalRepositoryImpl @Inject constructor(
             )
         )
     }
+
+    override suspend fun getRoutePath(startX: Double, startY: Double, endX: Double, endY: Double): List<Pair<Double, Double>> = withContext(Dispatchers.IO) {
+        delay(300)
+        // Return a mock curved route path between start and end coordinates to simulate follow-roads
+        listOf(
+            startY to startX,
+            startY + (endY - startY) * 0.3 to startX + (endX - startX) * 0.1,
+            startY + (endY - startY) * 0.6 to startX + (endX - startX) * 0.4,
+            startY + (endY - startY) * 0.8 to startX + (endX - startX) * 0.9,
+            endY to endX
+        )
+    }
 }

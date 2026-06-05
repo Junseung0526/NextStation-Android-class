@@ -21,7 +21,13 @@ data class TmapRouteResponse(
 )
 
 data class Feature(
+    val geometry: Geometry?,
     val properties: Properties?
+)
+
+data class Geometry(
+    val type: String?,
+    val coordinates: com.google.gson.JsonElement?
 )
 
 data class Properties(

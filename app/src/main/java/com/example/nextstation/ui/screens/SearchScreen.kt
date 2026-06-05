@@ -2,6 +2,7 @@ package com.example.nextstation.ui.screens
 
 import android.os.Bundle
 import androidx.compose.animation.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,6 +30,182 @@ import com.kakao.vectormap.KakaoMap
 import com.kakao.vectormap.KakaoMapReadyCallback
 import com.kakao.vectormap.MapLifeCycleCallback
 import com.kakao.vectormap.MapView
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import com.example.nextstation.util.EmulatorDetector
+import com.example.nextstation.util.NetworkUtils
+import android.widget.Toast
+
+@Composable
+fun MockMapView(modifier: Modifier = Modifier) {
+    val colorScheme = MaterialTheme.colorScheme
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "pulseScale"
+    )
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "pulseAlpha"
+    )
+
+    Box(
+        modifier = modifier
+            .background(colorScheme.surfaceVariant.copy(alpha = 0.4f))
+    ) {
+        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+            val width = size.width
+            val height = size.height
+
+            // Draw map grid lines
+            val gridSpacing = 80.dp.toPx()
+            val gridColor = colorScheme.onSurfaceVariant.copy(alpha = 0.08f)
+            
+            // Vertical grid lines
+            var x = 0f
+            while (x < width) {
+                drawLine(
+                    color = gridColor,
+                    start = Offset(x, 0f),
+                    end = Offset(x, height),
+                    strokeWidth = 1.dp.toPx()
+                )
+                x += gridSpacing
+            }
+
+            // Horizontal grid lines
+            var y = 0f
+            while (y < height) {
+                drawLine(
+                    color = gridColor,
+                    start = Offset(0f, y),
+                    end = Offset(width, y),
+                    strokeWidth = 1.dp.toPx()
+                )
+                y += gridSpacing
+            }
+
+            // Draw a mock road/path line
+            val pathColor = colorScheme.primary.copy(alpha = 0.15f)
+            val roadWidth = 24.dp.toPx()
+            
+            // Draw a main diagonal road
+            drawLine(
+                color = pathColor,
+                start = Offset(width * 0.1f, height * 0.3f),
+                end = Offset(width * 0.9f, height * 0.7f),
+                strokeWidth = roadWidth,
+                cap = StrokeCap.Round
+            )
+
+            // Draw an intersection road
+            drawLine(
+                color = pathColor,
+                start = Offset(width * 0.5f, 0f),
+                end = Offset(width * 0.5f, height),
+                strokeWidth = roadWidth,
+                cap = StrokeCap.Round
+            )
+            
+            // Draw a mock route line in primary color (dotted/dashed)
+            val routeColor = colorScheme.primary.copy(alpha = 0.6f)
+            val routePath = Path().apply {
+                moveTo(width * 0.5f, height * 0.1f)
+                lineTo(width * 0.5f, height * 0.5f)
+                lineTo(width * 0.8f, height * 0.65f)
+            }
+            
+            drawPath(
+                path = routePath,
+                color = routeColor,
+                style = Stroke(
+                    width = 4.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(
+                        floatArrayOf(20f, 10f),
+                        0f
+                    )
+                )
+            )
+
+            // Draw current location dot with pulse
+            val locationCenter = Offset(width * 0.5f, height * 0.5f)
+            
+            // Dotted pulse
+            drawCircle(
+                color = colorScheme.primary,
+                radius = 16.dp.toPx() * pulseScale,
+                center = locationCenter,
+                alpha = pulseAlpha
+            )
+
+            // Central solid dot
+            drawCircle(
+                color = colorScheme.primary,
+                radius = 8.dp.toPx(),
+                center = locationCenter
+            )
+
+            // Draw a mock bus stop marker
+            val stopCenter = Offset(width * 0.5f, height * 0.25f)
+            drawCircle(
+                color = colorScheme.secondary,
+                radius = 6.dp.toPx(),
+                center = stopCenter
+            )
+        }
+
+        // Tag indicating Emulator/Mock mode
+        Surface(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+                .padding(bottom = 80.dp), // Clear bottom nav bar
+            shape = RoundedCornerShape(8.dp),
+            color = colorScheme.surfaceVariant.copy(alpha = 0.85f),
+            border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.outlineVariant)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    tint = colorScheme.primary,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "Mock Map (Emulator Mode)",
+                    style = androidx.compose.ui.text.TextStyle(
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colorScheme.onSurfaceVariant
+                    )
+                )
+            }
+        }
+    }
+}
 
 @Composable
 fun KakaoMapView(
@@ -91,10 +268,14 @@ fun KakaoMapView(
 }
 
 @Composable
-fun SearchScreen(viewModel: MainViewModel) {
+fun SearchScreen(
+    viewModel: MainViewModel,
+    onNavigateToHome: () -> Unit
+) {
     val routeResults by viewModel.routeResults.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val estimatedTime by viewModel.estimatedTime.collectAsStateWithLifecycle()
+    val searchQueryState by viewModel.searchQuery.collectAsStateWithLifecycle()
 
     var destinationQuery by remember { mutableStateOf("") }
     var selectedRoute by remember { mutableStateOf<RouteInfo?>(null) }
@@ -103,17 +284,48 @@ fun SearchScreen(viewModel: MainViewModel) {
 
     val colorScheme = MaterialTheme.colorScheme
     val context = LocalContext.current
+
+    // Sync viewModel.searchQuery to local destinationQuery when it changes
+    LaunchedEffect(searchQueryState) {
+        if (searchQueryState.isNotEmpty()) {
+            destinationQuery = searchQueryState
+            viewModel.searchRoutes(searchQueryState) // Auto trigger search
+            viewModel.updateSearchQuery("") // Clear the flow
+        }
+    }
     
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Optimized KakaoMapView
-        KakaoMapView(
-            modifier = Modifier.fillMaxSize(),
-            onMapReady = { kakaoMap ->
-                // Initial map setup (e.g., camera move)
-            }
-        )
+        // Render MockMapView on emulator to prevent native lib loading and lag, else use real KakaoMapView
+        if (EmulatorDetector.isEmulator()) {
+            MockMapView(modifier = Modifier.fillMaxSize())
+        } else {
+            // Optimized KakaoMapView
+            KakaoMapView(
+                modifier = Modifier.fillMaxSize(),
+                onMapReady = { kakaoMap ->
+                    // Center camera on user's current location to resolve the Pangyo Station issue
+                    val locationManager = context.getSystemService(android.content.Context.LOCATION_SERVICE) as android.location.LocationManager
+                    try {
+                        val loc = locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                            ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+                        // Use actual GPS if inside Seoul bounds, else use dummy Seoul location (Gangnam Station)
+                        val targetLatLng = if (loc != null && loc.latitude in 37.42..37.70 && loc.longitude in 126.75..127.20) {
+                            com.kakao.vectormap.LatLng.from(loc.latitude, loc.longitude)
+                        } else {
+                            com.kakao.vectormap.LatLng.from(37.4979, 127.0276) // Dummy Gangnam Station
+                        }
+                        val cameraUpdate = com.kakao.vectormap.camera.CameraUpdateFactory.newCenterPosition(targetLatLng, 15)
+                        kakaoMap.moveCamera(cameraUpdate)
+                    } catch (e: SecurityException) {
+                        val targetLatLng = com.kakao.vectormap.LatLng.from(37.4979, 127.0276)
+                        val cameraUpdate = com.kakao.vectormap.camera.CameraUpdateFactory.newCenterPosition(targetLatLng, 15)
+                        kakaoMap.moveCamera(cameraUpdate)
+                    }
+                }
+            )
+        }
         
         // Floating Top Search Bar (rest of the UI remains the same)
         Card(
@@ -149,7 +361,13 @@ fun SearchScreen(viewModel: MainViewModel) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 } else {
-                    IconButton(onClick = { viewModel.searchRoutes(destinationQuery) }) {
+                    IconButton(onClick = {
+                        if (NetworkUtils.isNetworkAvailable(context)) {
+                            viewModel.searchRoutes(destinationQuery)
+                        } else {
+                            Toast.makeText(context, "네트워크 연결이 끊겼습니다. 연결 상태를 확인해주세요.", Toast.LENGTH_SHORT).show()
+                        }
+                    }) {
                         Icon(Icons.Default.DirectionsBus, null, tint = colorScheme.primary)
                     }
                 }
@@ -197,17 +415,26 @@ fun SearchScreen(viewModel: MainViewModel) {
                                             val (startX, startY) = try {
                                                 val loc = locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
                                                     ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
-                                                if (loc != null) loc.longitude to loc.latitude else 126.9780 to 37.5665
+                                                // Use actual GPS if inside Seoul bounds, else use dummy Seoul location (Gangnam Station)
+                                                if (loc != null && loc.latitude in 37.42..37.70 && loc.longitude in 126.75..127.20) {
+                                                    loc.longitude to loc.latitude
+                                                } else {
+                                                    127.0276 to 37.4979 // Dummy Gangnam Station
+                                                }
                                             } catch (e: SecurityException) {
-                                                126.9780 to 37.5665
+                                                127.0276 to 37.4979
                                             }
                                             
-                                            viewModel.estimateTravelTime(
-                                                startX = startX,
-                                                startY = startY,
-                                                endX = route.gpsX ?: 127.0000,
-                                                endY = route.gpsY ?: 37.6000
-                                            )
+                                            if (NetworkUtils.isNetworkAvailable(context)) {
+                                                viewModel.estimateTravelTime(
+                                                    startX = startX,
+                                                    startY = startY,
+                                                    endX = route.gpsX ?: 127.0000,
+                                                    endY = route.gpsY ?: 37.6000
+                                                )
+                                            } else {
+                                                Toast.makeText(context, "네트워크 연결이 끊겼습니다.", Toast.LENGTH_SHORT).show()
+                                            }
                                         }
                                     }
                                 }
@@ -268,7 +495,22 @@ fun SearchScreen(viewModel: MainViewModel) {
                                 }
                                 Button(
                                     onClick = {
-                                        viewModel.setAlarm(destinationQuery, alarmMinutes.toInt(), phoneNumber, "곧 도착합니다!")
+                                        viewModel.setAlarm(
+                                            destination = targetRoute.stNm,
+                                            leadMinutes = alarmMinutes.toIntOrNull() ?: 5,
+                                            phoneNumber = phoneNumber,
+                                            message = "버스(${targetRoute.busNumber})가 곧 도착 예정입니다.",
+                                            arsId = targetRoute.arsId,
+                                            busNumber = targetRoute.busNumber,
+                                            gpsX = targetRoute.gpsX,
+                                            gpsY = targetRoute.gpsY
+                                        )
+                                        // Reset search state
+                                        destinationQuery = ""
+                                        selectedRoute = null
+                                        viewModel.clearSearchResults()
+                                        // Navigate to Home
+                                        onNavigateToHome()
                                     },
                                     modifier = Modifier.weight(2f).height(52.dp),
                                     shape = RoundedCornerShape(16.dp)
